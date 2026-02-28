@@ -7,6 +7,7 @@ import type {
   SearchOptions,
   SearchResult
 } from "./types.js";
+import { z } from "zod";
 
 interface SearchApiRecord {
   czyOPP?: boolean;
@@ -22,6 +23,24 @@ interface SearchApiResponse {
   liczbaPodmiotow?: number;
   listaPodmiotow?: SearchApiRecord[];
 }
+
+const searchApiRecordSchema = z
+  .object({
+    czyOPP: z.boolean().optional(),
+    czyUpadlosc: z.boolean().optional(),
+    miejscowosc: z.string().optional(),
+    nazwa: z.string().optional(),
+    numer: z.string().optional(),
+    typRejestru: z.enum(["P", "S"]).optional()
+  })
+  .passthrough();
+
+const searchApiResponseSchema = z
+  .object({
+    liczbaPodmiotow: z.number().optional(),
+    listaPodmiotow: z.array(searchApiRecordSchema).optional()
+  })
+  .passthrough();
 
 function toRegisterArray(register: SearchOptions["register"]): RegisterType[] {
   if (!register || register === "both") {
@@ -143,7 +162,8 @@ export async function searchEntities(
     }
   };
 
-  const response = await client.wyszukiwarkaPost<SearchApiResponse>("krs", body);
+  const rawResponse = await client.wyszukiwarkaPost<unknown>("krs", body);
+  const response: SearchApiResponse = searchApiResponseSchema.parse(rawResponse);
   const entities = (response.listaPodmiotow ?? [])
     .map(mapSearchRecord)
     .filter((item): item is SearchEntity => item !== null);

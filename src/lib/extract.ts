@@ -1,6 +1,7 @@
 import { KrsValidationError } from "./errors.js";
 import { normalizeKrs } from "./normalize.js";
 import type { EntityExtractOptions, EntityExtractResult, KrsClient } from "./types.js";
+import { z } from "zod";
 
 function buildOfficialPath(
   normalizedKrs: string,
@@ -34,7 +35,8 @@ export async function getEntityExtract(
     register: options.register
   });
 
-  const data = await client.officialApiGet<Record<string, unknown>>(path);
+  const rawData = await client.officialApiGet<unknown>(path);
+  const data = z.record(z.unknown()).parse(rawData);
 
   return {
     krs: normalizedKrs,

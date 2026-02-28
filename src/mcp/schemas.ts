@@ -1,6 +1,26 @@
+import { zodToJsonSchema } from "zod-to-json-schema";
 import { z } from "zod";
 
-export const searchSchema = z
+export interface McpToolSchema<T extends z.ZodTypeAny> {
+  parser: T;
+  inputSchema: Record<string, unknown>;
+}
+
+function buildToolSchema<T extends z.ZodTypeAny>(parser: T): McpToolSchema<T> {
+  const raw = zodToJsonSchema(parser, {
+    target: "jsonSchema7",
+    $refStrategy: "none"
+  }) as Record<string, unknown>;
+
+  const normalized = { ...raw };
+  delete normalized.$schema;
+  return {
+    parser,
+    inputSchema: normalized
+  };
+}
+
+const searchParser = z
   .object({
     name: z.string().optional(),
     nip: z.string().optional(),
@@ -19,9 +39,9 @@ export const searchSchema = z
   })
   .strict();
 
-export const getKrsSchema = z.object({ krs: z.string().min(1) }).strict();
+const getKrsParser = z.object({ krs: z.string().min(1) }).strict();
 
-export const extractSchema = z
+const extractParser = z
   .object({
     krs: z.string().min(1),
     register: z.enum(["P", "S"]).optional(),
@@ -29,7 +49,7 @@ export const extractSchema = z
   })
   .strict();
 
-export const changesSchema = z
+const changesParser = z
   .object({
     date: z.string().min(10),
     hour_from: z.number().int().min(0).max(23).optional(),
@@ -37,17 +57,17 @@ export const changesSchema = z
   })
   .strict();
 
-export const getRdnSchema = z.object({ rdn: z.string().min(1) }).strict();
-export const voivodeshipsSchema = z.object({ query: z.string().optional() }).strict();
+const getRdnParser = z.object({ rdn: z.string().min(1) }).strict();
+const voivodeshipsParser = z.object({ query: z.string().optional() }).strict();
 
-export const countiesSchema = z
+const countiesParser = z
   .object({
     voivodeship: z.string().min(1),
     county: z.string().optional()
   })
   .strict();
 
-export const municipalitiesSchema = z
+const municipalitiesParser = z
   .object({
     voivodeship: z.string().min(1),
     county: z.string().min(1),
@@ -55,7 +75,7 @@ export const municipalitiesSchema = z
   })
   .strict();
 
-export const localitiesSchema = z
+const localitiesParser = z
   .object({
     voivodeship: z.string().min(1),
     county: z.string().min(1),
@@ -64,7 +84,7 @@ export const localitiesSchema = z
   })
   .strict();
 
-export const suggestCitiesSchema = z
+const suggestCitiesParser = z
   .object({
     query: z.string().min(1),
     voivodeship: z.string().optional(),
@@ -73,7 +93,7 @@ export const suggestCitiesSchema = z
   })
   .strict();
 
-export const suggestStreetsSchema = z
+const suggestStreetsParser = z
   .object({
     query: z.string().min(1),
     voivodeship: z.string().optional(),
@@ -83,16 +103,16 @@ export const suggestStreetsSchema = z
   })
   .strict();
 
-export const suggestPostalCodesSchema = z
+const suggestPostalCodesParser = z
   .object({
     locality: z.string().min(1),
     street: z.string().optional()
   })
   .strict();
 
-export const lookupByCitySchema = z.object({ city: z.string().min(1) }).strict();
+const lookupByCityParser = z.object({ city: z.string().min(1) }).strict();
 
-export const validateAddressSchema = z
+const validateAddressParser = z
   .object({
     voivodeship: z.string().optional(),
     county: z.string().optional(),
@@ -104,3 +124,19 @@ export const validateAddressSchema = z
     postalCode: z.string().optional()
   })
   .passthrough();
+
+export const searchToolSchema = buildToolSchema(searchParser);
+export const registryStatsToolSchema = buildToolSchema(searchParser.partial().strict());
+export const getKrsToolSchema = buildToolSchema(getKrsParser);
+export const extractToolSchema = buildToolSchema(extractParser);
+export const changesToolSchema = buildToolSchema(changesParser);
+export const getRdnToolSchema = buildToolSchema(getRdnParser);
+export const voivodeshipsToolSchema = buildToolSchema(voivodeshipsParser);
+export const countiesToolSchema = buildToolSchema(countiesParser);
+export const municipalitiesToolSchema = buildToolSchema(municipalitiesParser);
+export const localitiesToolSchema = buildToolSchema(localitiesParser);
+export const suggestCitiesToolSchema = buildToolSchema(suggestCitiesParser);
+export const suggestStreetsToolSchema = buildToolSchema(suggestStreetsParser);
+export const suggestPostalCodesToolSchema = buildToolSchema(suggestPostalCodesParser);
+export const lookupByCityToolSchema = buildToolSchema(lookupByCityParser);
+export const validateAddressToolSchema = buildToolSchema(validateAddressParser);

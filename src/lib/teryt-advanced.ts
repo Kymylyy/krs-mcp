@@ -10,6 +10,10 @@ import type {
   SuggestStreetsOptions,
   TerytSuggestion
 } from "./types.js";
+import { z } from "zod";
+
+const suggestionItemSchema = z.record(z.unknown());
+const suggestionListSchema = z.array(suggestionItemSchema);
 
 function requireQuery(value: string, label: string): void {
   if (!value.trim()) {
@@ -18,7 +22,7 @@ function requireQuery(value: string, label: string): void {
 }
 
 function mapSuggestions(data: unknown): TerytSuggestion[] {
-  return asArray<Record<string, unknown>>(data).map((item) => {
+  return asArray<Record<string, unknown>>(suggestionListSchema.parse(data)).map((item) => {
     const label =
       asStringOrNull(item.nazwa) ??
       asStringOrNull(item.value) ??

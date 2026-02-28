@@ -93,6 +93,15 @@ npm run dev
 ## Configuration
 `createKrsClient()` accepts partial `KrsConfig` for endpoint URLs, timeout, rate-limit and `fetch` implementation.
 
+MCP runtime can also read config from environment variables:
+- `KRS_OFFICIAL_API_BASE_URL`
+- `KRS_WYSZUKIWARKA_BASE_URL`
+- `KRS_TERYT_ADVANCED_BASE_URL`
+- `KRS_API_KEY_HEADER`
+- `KRS_SECRET_KEY`
+- `KRS_TIMEOUT_MS`
+- `KRS_RATE_LIMIT_PER_SECOND`
+
 Defaults:
 - timeout: `15000ms`
 - rate-limit: `2 req/s per host`

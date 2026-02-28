@@ -1,6 +1,7 @@
 import { KrsValidationError } from "./errors.js";
 import { asArray, asRecord, asStringOrNull } from "./normalize.js";
 import type { KrsClient, TerytBasicOptions, TerytItem } from "./types.js";
+import { z } from "zod";
 
 interface RawTerytItem {
   nazwa?: unknown;
@@ -8,8 +9,17 @@ interface RawTerytItem {
   [key: string]: unknown;
 }
 
+const terytItemSchema = z
+  .object({
+    nazwa: z.unknown().optional(),
+    teryt: z.unknown().optional()
+  })
+  .passthrough();
+
+const terytListSchema = z.array(terytItemSchema);
+
 function mapItems(input: unknown): TerytItem[] {
-  return asArray<RawTerytItem>(input).map((item) => ({
+  return asArray<RawTerytItem>(terytListSchema.parse(input)).map((item) => ({
     name: asStringOrNull(item.nazwa) ?? "",
     teryt: Boolean(item.teryt),
     raw: asRecord(item)

@@ -1,6 +1,7 @@
 import { KrsValidationError } from "./errors.js";
 import { normalizeDateIso, toPaddedKrsList } from "./normalize.js";
 import type { KrsClient, RegistryChangesOptions, RegistryChangesResult } from "./types.js";
+import { z } from "zod";
 
 const BULLETIN_CUTOFF = "2021-12-08";
 
@@ -37,7 +38,8 @@ export async function getRegistryChanges(
     path = `BiuletynGodzinowy/${normalizedDate}?godzinaOd=${options.hourFrom}&godzinaDo=${options.hourTo}`;
   }
 
-  const raw = await client.officialApiGet<string[]>(path);
+  const rawPayload = await client.officialApiGet<unknown>(path);
+  const raw = z.array(z.string()).parse(rawPayload);
   const krsNumbers = toPaddedKrsList(raw);
 
   return {
