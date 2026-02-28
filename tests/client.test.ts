@@ -10,6 +10,27 @@ function jsonResponse(payload: unknown, status = 200): Response {
 }
 
 describe("client", () => {
+  it("keeps defaults when optional config fields are undefined", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ ok: true }));
+    const client = createKrsClient({
+      officialApiBaseUrl: undefined,
+      timeoutMs: undefined,
+      rateLimitPerSecond: undefined,
+      fetchImpl: fetchMock as typeof fetch
+    });
+
+    expect(client.config.officialApiBaseUrl).toBe("https://api-krs.ms.gov.pl/api/krs");
+    expect(client.config.timeoutMs).toBe(15_000);
+    expect(client.config.rateLimitPerSecond).toBe(2);
+
+    await client.officialApiGet("OdpisAktualny/19193?format=json");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api-krs.ms.gov.pl/api/krs/OdpisAktualny/19193?format=json",
+      expect.objectContaining({ method: "GET" })
+    );
+  });
+
   it("officialApiGet returns parsed payload", async () => {
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ ok: true }));
     const client = createKrsClient({ fetchImpl: fetchMock as typeof fetch });

@@ -72,8 +72,13 @@ interface RequestOptions {
 
 export function createKrsClient(config: Partial<KrsConfig> = {}): KrsClient {
   const mergedConfig: KrsConfig = {
-    ...DEFAULT_CONFIG,
-    ...config,
+    officialApiBaseUrl: config.officialApiBaseUrl ?? DEFAULT_CONFIG.officialApiBaseUrl,
+    wyszukiwarkaBaseUrl: config.wyszukiwarkaBaseUrl ?? DEFAULT_CONFIG.wyszukiwarkaBaseUrl,
+    terytAdvancedBaseUrl: config.terytAdvancedBaseUrl ?? DEFAULT_CONFIG.terytAdvancedBaseUrl,
+    apiKeyHeader: config.apiKeyHeader ?? DEFAULT_CONFIG.apiKeyHeader,
+    secretKey: config.secretKey ?? DEFAULT_CONFIG.secretKey,
+    timeoutMs: config.timeoutMs ?? DEFAULT_CONFIG.timeoutMs,
+    rateLimitPerSecond: config.rateLimitPerSecond ?? DEFAULT_CONFIG.rateLimitPerSecond,
     fetchImpl: config.fetchImpl ?? DEFAULT_CONFIG.fetchImpl
   };
 
