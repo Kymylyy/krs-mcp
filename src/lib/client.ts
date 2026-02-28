@@ -82,6 +82,7 @@ export function createKrsClient(config: Partial<KrsConfig> = {}): KrsClient {
   async function request<T>(options: RequestOptions): Promise<T> {
     const maxRetries = 2;
     const backoff = [200, 500];
+    let hasRetried401 = false;
 
     for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
       await limiter.acquire(options.url);
@@ -124,7 +125,8 @@ export function createKrsClient(config: Partial<KrsConfig> = {}): KrsClient {
       }
 
       if (!response.ok) {
-        if (response.status === 401 && options.retry401 && attempt === 0) {
+        if (response.status === 401 && options.retry401 && !hasRetried401) {
+          hasRetried401 = true;
           continue;
         }
 

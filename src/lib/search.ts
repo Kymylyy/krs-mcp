@@ -90,9 +90,12 @@ function validateInput(input: SearchOptions): void {
   }
 }
 
-function mapSearchRecord(record: SearchApiRecord): SearchEntity {
+function mapSearchRecord(record: SearchApiRecord): SearchEntity | null {
   const numer = typeof record.numer === "string" ? record.numer : "";
   const digits = numer.replace(/\D/g, "");
+  if (digits.length === 0 || digits.length > 10) {
+    return null;
+  }
 
   return {
     krs: digits.padStart(10, "0"),
@@ -141,11 +144,14 @@ export async function searchEntities(
   };
 
   const response = await client.wyszukiwarkaPost<SearchApiResponse>("krs", body);
+  const entities = (response.listaPodmiotow ?? [])
+    .map(mapSearchRecord)
+    .filter((item): item is SearchEntity => item !== null);
 
   return {
     total: typeof response.liczbaPodmiotow === "number" ? response.liczbaPodmiotow : 0,
     page,
     limit,
-    entities: (response.listaPodmiotow ?? []).map(mapSearchRecord)
+    entities
   };
 }

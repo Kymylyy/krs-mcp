@@ -44,6 +44,16 @@ describe("searchEntities", () => {
     expect(result.entities[0]?.krs).toBe("0000019193");
   });
 
+  it("skips records with invalid KRS numbers", async () => {
+    const client = makeClient({
+      liczbaPodmiotow: 1,
+      listaPodmiotow: [{ numer: "", nazwa: "BROKEN" }]
+    });
+
+    const result = await searchEntities(client, { name: "BROKEN" });
+    expect(result.entities).toHaveLength(0);
+  });
+
   it("rejects empty criteria", async () => {
     await expect(searchEntities(makeClient({}), {})).rejects.toBeInstanceOf(KrsValidationError);
   });

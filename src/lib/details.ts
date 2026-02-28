@@ -24,7 +24,7 @@ function mapBoardMember(item: DetailsMemberRecord): BoardMember {
     secondLastName: asStringOrNull(item.nazwiskoDrugiCzlon),
     corporateName,
     raw: item
-  } as BoardMember;
+  };
 }
 
 export async function getEntityDetails(client: KrsClient, krs: string): Promise<EntityDetails> {
