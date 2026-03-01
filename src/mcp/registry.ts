@@ -153,7 +153,7 @@ export function createRegisteredTools(client: KrsClient): RegisteredTool[] {
 
     defineTool({
       name: "list_counties",
-      description: "List counties for a voivodeship.",
+      description: "Lookup counties by exact county filter inside a voivodeship.",
       schema: countiesToolSchema,
       run: async (input) => listCounties(client, input),
       summarize: (result) => `Returned ${(result as unknown[]).length} counties.`
@@ -161,7 +161,7 @@ export function createRegisteredTools(client: KrsClient): RegisteredTool[] {
 
     defineTool({
       name: "list_municipalities",
-      description: "List municipalities for voivodeship+county.",
+      description: "Lookup municipalities by exact municipality filter.",
       schema: municipalitiesToolSchema,
       run: async (input) => listMunicipalities(client, input),
       summarize: (result) => `Returned ${(result as unknown[]).length} municipalities.`
@@ -169,7 +169,7 @@ export function createRegisteredTools(client: KrsClient): RegisteredTool[] {
 
     defineTool({
       name: "list_localities",
-      description: "List localities for voivodeship+county+municipality.",
+      description: "Lookup localities by exact locality filter.",
       schema: localitiesToolSchema,
       run: async (input) => listLocalities(client, input),
       summarize: (result) => `Returned ${(result as unknown[]).length} localities.`

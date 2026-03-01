@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { KrsValidationError } from "../src/lib/errors.js";
+import { KrsApiError, KrsValidationError } from "../src/lib/errors.js";
 import {
   listCounties,
   listLocalities,
@@ -47,11 +47,52 @@ describe("teryt basic", () => {
   it("validates missing parent filters", async () => {
     await expect(listCounties(makeClient(), {})).rejects.toBeInstanceOf(KrsValidationError);
     await expect(
+      listCounties(makeClient(), { voivodeship: "MAZ" })
+    ).rejects.toBeInstanceOf(KrsValidationError);
+    await expect(
       listMunicipalities(makeClient(), { voivodeship: "MAZ" })
+    ).rejects.toBeInstanceOf(KrsValidationError);
+    await expect(
+      listMunicipalities(makeClient(), { voivodeship: "MAZ", county: "WAW" })
     ).rejects.toBeInstanceOf(KrsValidationError);
     await expect(
       listLocalities(makeClient(), { voivodeship: "MAZ", county: "WAW" })
     ).rejects.toBeInstanceOf(KrsValidationError);
+    await expect(
+      listLocalities(makeClient(), {
+        voivodeship: "MAZ",
+        county: "WAW",
+        municipality: "WAW"
+      })
+    ).rejects.toBeInstanceOf(KrsValidationError);
+  });
+
+  it("remaps 404 to validation errors for exact-match endpoints", async () => {
+    const notFoundClient: KrsClient = {
+      ...makeClient(),
+      terytBasicPost: async () => {
+        throw new KrsApiError("Not Found", 404, "https://example.invalid");
+      }
+    };
+
+    await expect(
+      listCounties(notFoundClient, { voivodeship: "MAZOWIECKIE", county: "WARSZAWA" })
+    ).rejects.toThrow("No matches for county");
+    await expect(
+      listMunicipalities(notFoundClient, {
+        voivodeship: "MAZOWIECKIE",
+        county: "WARSZAWA",
+        municipality: "WARSZAWA"
+      })
+    ).rejects.toThrow("No matches for municipality");
+    await expect(
+      listLocalities(notFoundClient, {
+        voivodeship: "MAZOWIECKIE",
+        county: "WARSZAWA",
+        municipality: "WARSZAWA",
+        locality: "WARSZAWA"
+      })
+    ).rejects.toThrow("No matches for locality");
   });
 });
 
@@ -72,5 +113,41 @@ describe("teryt advanced", () => {
 
     expect(lookup.city).toBe("WARSZAWA");
     expect(check.valid).toBe(true);
+  });
+
+  it("remaps 503 to clear temporary-unavailable message", async () => {
+    const unavailableClient: KrsClient = {
+      ...makeClient(),
+      terytAdvancedGet: async () => {
+        throw new KrsApiError(
+          "Request failed with HTTP 503",
+          503,
+          "https://example.invalid/GetCities"
+        );
+      },
+      terytAdvancedPost: async () => {
+        throw new KrsApiError(
+          "Request failed with HTTP 503",
+          503,
+          "https://example.invalid/CheckAdress"
+        );
+      }
+    };
+
+    await expect(suggestCities(unavailableClient, { query: "WAR" })).rejects.toThrow(
+      "TERYT advanced service is temporarily unavailable"
+    );
+    await expect(suggestStreets(unavailableClient, { query: "MARS" })).rejects.toThrow(
+      "TERYT advanced service is temporarily unavailable"
+    );
+    await expect(
+      suggestPostalCodes(unavailableClient, { locality: "WARSZAWA" })
+    ).rejects.toThrow("TERYT advanced service is temporarily unavailable");
+    await expect(lookupAdminByCity(unavailableClient, "WARSZAWA")).rejects.toThrow(
+      "TERYT advanced service is temporarily unavailable"
+    );
+    await expect(validateAddress(unavailableClient, { locality: "WARSZAWA" })).rejects.toThrow(
+      "TERYT advanced service is temporarily unavailable"
+    );
   });
 });

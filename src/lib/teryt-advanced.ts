@@ -1,4 +1,4 @@
-import { KrsValidationError } from "./errors.js";
+import { KrsApiError, KrsValidationError } from "./errors.js";
 import { asArray, asRecord, asStringOrNull } from "./normalize.js";
 import type {
   AddressValidationInput,
@@ -38,20 +38,37 @@ function mapSuggestions(data: unknown): TerytSuggestion[] {
   });
 }
 
+function remapTerytAdvancedUnavailable(error: unknown): never {
+  if (error instanceof KrsApiError && error.statusCode === 503) {
+    throw new KrsApiError(
+      "TERYT advanced service is temporarily unavailable",
+      error.statusCode,
+      error.url,
+      error.details
+    );
+  }
+
+  throw error;
+}
+
 export async function suggestCities(
   client: KrsClient,
   options: SuggestCitiesOptions
 ): Promise<TerytSuggestion[]> {
   requireQuery(options.query, "query");
 
-  const result = await client.terytAdvancedGet<unknown>("GetCities", {
-    Miejscowosc: options.query,
-    Wojewodztwo: options.voivodeship ?? "",
-    Powiat: options.county ?? "",
-    Gmina: options.municipality ?? ""
-  });
+  try {
+    const result = await client.terytAdvancedGet<unknown>("GetCities", {
+      Miejscowosc: options.query,
+      Wojewodztwo: options.voivodeship ?? "",
+      Powiat: options.county ?? "",
+      Gmina: options.municipality ?? ""
+    });
 
-  return mapSuggestions(result);
+    return mapSuggestions(result);
+  } catch (error) {
+    remapTerytAdvancedUnavailable(error);
+  }
 }
 
 export async function suggestStreets(
@@ -60,15 +77,19 @@ export async function suggestStreets(
 ): Promise<TerytSuggestion[]> {
   requireQuery(options.query, "query");
 
-  const result = await client.terytAdvancedGet<unknown>("GetStreets", {
-    Ulica: options.query,
-    Wojewodztwo: options.voivodeship ?? "",
-    Powiat: options.county ?? "",
-    Gmina: options.municipality ?? "",
-    Miejscowosc: options.locality ?? ""
-  });
+  try {
+    const result = await client.terytAdvancedGet<unknown>("GetStreets", {
+      Ulica: options.query,
+      Wojewodztwo: options.voivodeship ?? "",
+      Powiat: options.county ?? "",
+      Gmina: options.municipality ?? "",
+      Miejscowosc: options.locality ?? ""
+    });
 
-  return mapSuggestions(result);
+    return mapSuggestions(result);
+  } catch (error) {
+    remapTerytAdvancedUnavailable(error);
+  }
 }
 
 export async function suggestPostalCodes(
@@ -77,12 +98,16 @@ export async function suggestPostalCodes(
 ): Promise<TerytSuggestion[]> {
   requireQuery(options.locality, "locality");
 
-  const result = await client.terytAdvancedGet<unknown>("GetPostalCodes", {
-    Miejscowosc: options.locality,
-    Ulica: options.street ?? ""
-  });
+  try {
+    const result = await client.terytAdvancedGet<unknown>("GetPostalCodes", {
+      Miejscowosc: options.locality,
+      Ulica: options.street ?? ""
+    });
 
-  return mapSuggestions(result);
+    return mapSuggestions(result);
+  } catch (error) {
+    remapTerytAdvancedUnavailable(error);
+  }
 }
 
 export async function lookupAdminByCity(
@@ -91,27 +116,35 @@ export async function lookupAdminByCity(
 ): Promise<AdminByCityResult> {
   requireQuery(city, "city");
 
-  const result = await client.terytAdvancedGet<unknown>("DajAdmPoMiasto", {
-    city
-  });
+  try {
+    const result = await client.terytAdvancedGet<unknown>("DajAdmPoMiasto", {
+      city
+    });
 
-  return {
-    city,
-    raw: result
-  };
+    return {
+      city,
+      raw: result
+    };
+  } catch (error) {
+    remapTerytAdvancedUnavailable(error);
+  }
 }
 
 export async function validateAddress(
   client: KrsClient,
   input: AddressValidationInput
 ): Promise<AddressValidationResult> {
-  const result = await client.terytAdvancedPost<unknown>("CheckAdress", input);
+  try {
+    const result = await client.terytAdvancedPost<unknown>("CheckAdress", input);
 
-  const object = asRecord(result);
-  const possibleValidity = object.valid ?? object.isValid ?? object.czyPoprawny ?? null;
+    const object = asRecord(result);
+    const possibleValidity = object.valid ?? object.isValid ?? object.czyPoprawny ?? null;
 
-  return {
-    valid: typeof possibleValidity === "boolean" ? possibleValidity : null,
-    raw: result
-  };
+    return {
+      valid: typeof possibleValidity === "boolean" ? possibleValidity : null,
+      raw: result
+    };
+  } catch (error) {
+    remapTerytAdvancedUnavailable(error);
+  }
 }
