@@ -1,37 +1,36 @@
 # krs-mcp
 
-TypeScript standalone library + MCP server for Polish KRS data sources.
+TypeScript SDK + MCP server do pracy z publicznymi danymi KRS (API oficjalne, wyszukiwarka, TERYT, RDN).
 
-## Features
-- Official KRS API support (extracts + bulletins).
-- Wyszukiwarka API support (including unmasked board members).
-- RDN debtor endpoint support.
-- TERYT basic + advanced endpoint wrappers.
-- MCP server exposing 16 tools.
+Krótki opis repo (np. do ustawienia na GitHub):  
+`MCP server and TypeScript SDK for Polish KRS data sources (official API, search API, TERYT, RDN).`
 
-## Requirements
-- Node.js >= 20
-- npm
+## Zakres
+- API oficjalne KRS: odpisy + biuletyny zmian.
+- API wyszukiwarki: wyszukiwanie i szczegóły podmiotu (w tym skład zarządu).
+- RDN: pobieranie danych dłużnika.
+- TERYT basic + advanced: słowniki i walidacja adresów.
+- Serwer MCP z 16 narzędziami.
 
-## Install
+## Wymagania
+- Node.js `>=20`
+- `npm`
+
+## Szybki start
 
 ```bash
 npm install
+npm run build
+npm run start
 ```
 
-## Scripts
+Tryb developerski (bez builda):
 
 ```bash
-npm run build
 npm run dev
-npm run start
-npm run lint
-npm run typecheck
-npm test
-KRS_LIVE_TESTS=1 npm run test:live
 ```
 
-## Standalone library usage
+## Użycie jako biblioteka
 
 ```ts
 import {
@@ -59,7 +58,23 @@ const search = await searchEntities(client, { name: "POLSKIE KOLEJE", limit: 5 }
 const details = await getEntityDetails(client, "19193");
 ```
 
-## MCP tools
+## Integracja MCP (stdio)
+Po `npm run build` uruchamialny entrypoint to `dist/mcp/index.js`.
+
+Przykładowa konfiguracja MCP:
+
+```json
+{
+  "mcpServers": {
+    "krs": {
+      "command": "node",
+      "args": ["/absolute/path/to/krs-mcp/dist/mcp/index.js"]
+    }
+  }
+}
+```
+
+## Narzędzia MCP
 1. `search_entities`
 2. `get_entity_details`
 3. `get_entity_extract`
@@ -77,23 +92,15 @@ const details = await getEntityDetails(client, "19193");
 15. `lookup_admin_by_city`
 16. `validate_address`
 
-## Run MCP server
+### Uwaga: TERYT
+- `list_counties`, `list_municipalities`, `list_localities` działają jako endpointy dokładnego dopasowania.
+- Dla tych narzędzi podawaj pełne wartości filtrów (`county`, `municipality`, `locality`), inaczej upstream może zwracać `404`.
+- Endpointy TERYT advanced (`suggest_*`, `lookup_admin_by_city`, `validate_address`) mogą okresowo zwracać `503` po stronie zewnętrznej.
 
-```bash
-npm run build
-npm run start
-```
+## Konfiguracja
+`createKrsClient()` przyjmuje częściowy `KrsConfig` (base URL-e, timeout, rate-limit, własny `fetch`).
 
-Or during development:
-
-```bash
-npm run dev
-```
-
-## Configuration
-`createKrsClient()` accepts partial `KrsConfig` for endpoint URLs, timeout, rate-limit and `fetch` implementation.
-
-MCP runtime can also read config from environment variables:
+Serwer MCP czyta też zmienne środowiskowe:
 - `KRS_OFFICIAL_API_BASE_URL`
 - `KRS_WYSZUKIWARKA_BASE_URL`
 - `KRS_TERYT_ADVANCED_BASE_URL`
@@ -102,13 +109,25 @@ MCP runtime can also read config from environment variables:
 - `KRS_TIMEOUT_MS`
 - `KRS_RATE_LIMIT_PER_SECOND`
 
-Defaults:
+Domyślnie:
 - timeout: `15000ms`
-- rate-limit: `2 req/s per host`
-- retry: `401 x1` (auth endpoints), `5xx/network x2` with backoff
+- rate limit: `2 req/s` per host
+- retry: `401 x1` (endpointy auth), `5xx/network x2` (backoff)
 
-## Docs
+## Jakość i testy
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+KRS_LIVE_TESTS=1 npm run test:live
+```
+
+`test:live` jest opcjonalny i zależy od dostępności zewnętrznych API.
+
+## Dokumentacja
 - `docs/endpoint-contracts.md`
 - `docs/errors.md`
 - `docs/testing.md`
 - `docs/privacy.md`
+- `CONTRIBUTING.md`
