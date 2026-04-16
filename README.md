@@ -128,3 +128,6 @@ KRS_LIVE_TESTS=1 npm run test:live
 - `docs/testing.md`
 - `docs/privacy.md`
 - `CONTRIBUTING.md`
+
+## Licencja
+MIT — zobacz [`LICENSE`](LICENSE).
