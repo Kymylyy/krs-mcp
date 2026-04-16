@@ -2,9 +2,6 @@
 
 TypeScript SDK + MCP server do pracy z publicznymi danymi KRS (API oficjalne, wyszukiwarka, TERYT, RDN).
 
-Krótki opis repo (np. do ustawienia na GitHub):  
-`MCP server and TypeScript SDK for Polish KRS data sources (official API, search API, TERYT, RDN).`
-
 ## Zakres
 - API oficjalne KRS: odpisy + biuletyny zmian.
 - API wyszukiwarki: wyszukiwanie i szczegóły podmiotu (w tym skład zarządu).
@@ -55,7 +52,7 @@ import {
 
 const client = createKrsClient();
 const search = await searchEntities(client, { name: "POLSKIE KOLEJE", limit: 5 });
-const details = await getEntityDetails(client, "19193");
+const details = await getEntityDetails(client, "0000019193");
 ```
 
 ## Integracja MCP (stdio)
